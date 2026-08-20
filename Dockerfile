@@ -20,9 +20,9 @@ COPY backend/ ./backend/
 # Copy the built frontend from Stage 1
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
-# Hugging Face Spaces expects the app to run on port 7860
-ENV PORT=7860
-EXPOSE 7860
+# Koyeb expects the app to run on port 8000
+ENV PORT=8000
+EXPOSE 8000
 
-# Run with Gunicorn. Timeout is set to 120s to prevent worker kills during LLM calls.
-CMD exec gunicorn --bind :$PORT --workers 2 --threads 4 --timeout 120 backend.app:app
+# Run with Gunicorn. Timeout is 120s to prevent LLM call failures.
+CMD exec gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120 backend.app:app
