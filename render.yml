@@ -9,7 +9,7 @@ services:
       - key: OPENROUTER_API_KEY
         sync: false
       - key: OPENROUTER_MODEL
-        value: nvidia/nemotron-3-super:free
+        value: nvidia/nemotron-3-super-120b-a12b:free
       - key: MAX_EXPERTS
         value: "4"
       - key: OPENROUTER_APP_NAME
