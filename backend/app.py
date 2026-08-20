@@ -4,12 +4,10 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
-from dotenv import load_dotenv
 
 import requests
 from flask import Flask, jsonify, request, send_from_directory
-# 
-# load_dotenv()
+from flask_cors import CORS
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIST = BASE_DIR / "frontend" / "dist"
@@ -19,7 +17,8 @@ OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3-super-120b-a12b:free")
 MAX_EXPERTS = max(1, min(int(os.getenv("MAX_EXPERTS", "4")), 6))
 # OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-app = Flask(__name__, static_folder=str(FRONTEND_DIST), static_url_path="")
+app = Flask(__name__)
+CORS(app)
 
 with open(ROLES_FILE, "r", encoding="utf-8") as f:
     ROLES = json.load(f)
@@ -303,24 +302,24 @@ def agent():
         return jsonify({"error": str(exc)}), 500
 
 
-@app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
-def serve_frontend(path):
-    # API paths are handled above. Everything else goes to the React SPA.
-    if path.startswith("api/"):
-        return jsonify({"error": "Not found"}), 404
+# @app.route("/", defaults={"path": ""})
+# @app.route("/<path:path>")
+# def serve_frontend(path):
+#     # API paths are handled above. Everything else goes to the React SPA.
+#     if path.startswith("api/"):
+#         return jsonify({"error": "Not found"}), 404
 
-    target = FRONTEND_DIST / path
-    if path and target.exists() and target.is_file():
-        return send_from_directory(FRONTEND_DIST, path)
+#     target = FRONTEND_DIST / path
+#     if path and target.exists() and target.is_file():
+#         return send_from_directory(FRONTEND_DIST, path)
 
-    index = FRONTEND_DIST / "index.html"
-    if index.exists():
-        return send_from_directory(FRONTEND_DIST, "index.html")
+#     index = FRONTEND_DIST / "index.html"
+#     if index.exists():
+#         return send_from_directory(FRONTEND_DIST, "index.html")
 
-    return jsonify({
-        "error": "React build not found. Run npm run build first."
-    }), 500
+#     return jsonify({
+#         "error": "React build not found. Run npm run build first."
+#     }), 500
 
 
 if __name__ == "__main__":

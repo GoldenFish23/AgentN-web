@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm';
 import { createRoot } from "react-dom/client";
 import "./style.css";
 
+const API_BASE = import.meta.env.VITE_API_URL || "";
 const LEDGER_KEY = "agentn-flask-react-ledger-v1";
 
 const fallbackRoles = {
@@ -41,7 +42,7 @@ function App() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("/api/roles")
+    fetch(`${API_BASE}/api/roles`)
       .then(r => r.json())
       .then(data => {
         const map = {};
@@ -68,7 +69,7 @@ function App() {
     setStage("Routing your question…");
 
     try {
-      const response = await fetch("/api/agent", {
+      const response = await fetch(`${API_BASE}/api/agent`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
