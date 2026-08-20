@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: agentn
+    runtime: python
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt && cd frontend && npm install && npm run build
+    startCommand: gunicorn backend.app:app
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: nvidia/nemotron-3-super:free
+      - key: MAX_EXPERTS
+        value: "4"
+      - key: OPENROUTER_APP_NAME
+        value: AgentN
