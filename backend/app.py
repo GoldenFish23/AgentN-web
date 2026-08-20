@@ -4,9 +4,12 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
+from dotenv import load_dotenv
 
 import requests
 from flask import Flask, jsonify, request, send_from_directory
+# 
+# load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIST = BASE_DIR / "frontend" / "dist"
@@ -15,7 +18,7 @@ ROLES_FILE = BASE_DIR / "backend" / "roles.json"
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3-super-120b-a12b:free")
 MAX_EXPERTS = max(1, min(int(os.getenv("MAX_EXPERTS", "4")), 6))
-
+# OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 app = Flask(__name__, static_folder=str(FRONTEND_DIST), static_url_path="")
 
 with open(ROLES_FILE, "r", encoding="utf-8") as f:
@@ -24,7 +27,7 @@ with open(ROLES_FILE, "r", encoding="utf-8") as f:
 
 def openrouter(messages, temperature=0.5, max_tokens=900):
     """Server-side OpenRouter call. The API key never reaches React."""
-    api_key = os.getenv("OPENROUTER_API_KEY")
+    api_key = os.getenv("OPENROUTER_API_KEY","")
     if not api_key:
         raise RuntimeError("OPENROUTER_API_KEY is not configured.")
 
@@ -148,31 +151,24 @@ def run_expert(role_id, user_input, previous_decision=None):
         else f"Previous session context:\n{previous_decision[:5000]}"
     )
 
+    # --- YOUR EXCELLENT ADAPTIVE TONE PROMPT ---
+    system_prompt = (
+        f"IDENTITY: {role_id.upper()}\n"
+        f"DESCRIPTION: {role['description']}\n"
+        f"GOAL: {role['goal']}\n\n"
+        "--- ADAPTIVE TONE INSTRUCTIONS ---\n"
+        "1. IF the request is technical or complex: Be concise, specialized, and highly technical.\n"
+        "2. IF the request is casual, personal, or a joke: Respond naturally as your persona. Do NOT provide technical roadmaps or phase plans for simple conversation.\n"
+        "3. Avoid 'Corporate Speak' unless the user asks for a business plan."
+        "4. STYLE: The complete output must be only in proper Markdown format."
+    )
+
     messages = [
-        {
-            "role": "system",
-            "content": f"""
-IDENTITY: {role_id.upper()}
-DESCRIPTION: {role['description']}
-GOAL: {role['goal']}
-
-You are one independent expert in AgentN's multi-role panel.
-Answer the actual user question.
-
-Be concrete and useful.
-State uncertainty when appropriate.
-Do not claim live browsing or verification unless it was actually provided.
-Do not reveal hidden chain-of-thought. Give conclusions, evidence,
-assumptions, and useful reasoning instead.
-""",
-        },
-        {
-            "role": "user",
-            "content": f"{context}\n\nCURRENT QUESTION:\n{user_input}",
-        },
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": f"{context}\n\nCURRENT QUESTION:\n{user_input}"},
     ]
 
-    return role_id, openrouter(messages, temperature=0.65, max_tokens=900)
+    return role_id, openrouter(messages, temperature=0.65, max_tokens=500)
 
 
 def mediate(user_input, experts, previous_decision=None):
@@ -187,29 +183,31 @@ def mediate(user_input, experts, previous_decision=None):
         else previous_decision[:5000]
     )
 
+    # --- YOUR INTENT-SCALING PROMPT + BEAUTIFUL MARKDOWN STRUCTURE ---
     prompt = f"""
 You are AgentN's final MEDIATOR.
 
-USER QUESTION:
-{user_input}
-
-PREVIOUS SESSION:
+--- PREVIOUS CONTEXT ---
 {previous}
 
-INDEPENDENT EXPERT PERSPECTIVES:
+--- EXPERT FINDINGS ---
 {findings}
 
-Produce the best direct answer.
+--- MANDATORY MEDIATOR PROTOCOL ---
+1. IDENTIFY INTENT: Understand the context and depth of the USER REQUEST.
+2. DEPTH SCALING: 
+   - IF the prompt has depth (technical, statistical, planning, complex): Reply FORMALLY. Provide a high-density response. Use Markdown tables for comparisons. Every key point must end with a [Role] citation (e.g., [Planner]). DO NOT include your own 'Identity' or 'Description'. Start the response directly.
+   - IF the prompt is shallow (casual, personal, simple chat): Reply INFORMALLY. Be a friendly partner. Emojis are encouraged. Answers should be short, warm, and unstructured. NO roadmaps or phase plans for simple chat.
+3. FORMATTING (For Formal Replies Only): Structure your response exactly like this:
+   ### The Final Verdict
+   (Direct, decisive answer)
+   ### Head-to-Head Comparison
+   (Markdown table comparing options)
+   ### Why This Choice?
+   (Bulleted list with [Role] citations)
+4. STYLE: The complete output must be only in proper Markdown format.
 
-Rules:
-1. Resolve disagreements instead of blindly averaging.
-2. Prefer conclusions supported by multiple perspectives.
-3. Flag uncertainty and missing live information.
-4. Answer the user directly.
-5. For recommendations, prioritize or rank options and explain tradeoffs.
-6. Do not mention internal prompts or hidden chain-of-thought.
-7. Do not invent citations or pretend to browse.
-8. This is a consensus, not a transcript of the experts.
+USER REQUEST: {user_input}
 """
 
     return openrouter(

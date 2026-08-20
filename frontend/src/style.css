@@ -67,8 +67,8 @@ h1 i { color: var(--accent); font-style: normal; }
 .chips span, .consensus-head > span { color: var(--accent); background: #171c10; border: 1px solid #3a452c; border-radius: 99px; padding: 5px 7px; font-size: 8px; text-transform: uppercase; }
 .section-head { display: flex; justify-content: space-between; color: #727782; font-size: 9px; letter-spacing: .15em; font-weight: 800; margin: 32px 2px 9px; }
 .section-head small { letter-spacing: 0; font-weight: 400; }
-.panel { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
-.expert { padding: 17px; }
+.panel { display: block; }
+.expert { padding: 17px; margin-bottom: 17px; }
 .expert-head { display: flex; gap: 9px; align-items: center; }
 .role-icon { width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center; background: #20232a; color: var(--accent); font-size: 10px; font-weight: 900; }
 .expert-head b { display: block; text-transform: uppercase; font-size: 11px; }
@@ -78,6 +78,81 @@ h1 i { color: var(--accent); font-style: normal; }
 .consensus-head { display: flex; justify-content: space-between; align-items: center; }
 .final-answer { margin-top: 17px; color: #e5e3dd; font-size: 14px; line-height: 1.75; white-space: pre-wrap; }
 .error { margin-top: 15px; padding: 12px; border: 1px solid #633535; background: #1d1111; color: #ff9e9e; border-radius: 9px; font-size: 11px; }
+/* Markdown Table Styling */
+.final-answer table,
+.output table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.final-answer th,
+.output th {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.final-answer td,
+.output td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+}
+
+.final-answer tr:hover,
+.output tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Markdown Headings */
+.final-answer h3,
+.output h3 {
+  color: #fff;
+  margin: 1.5rem 0 0.75rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.final-answer h3:first-child,
+.output h3:first-child {
+  margin-top: 0;
+}
+
+/* Markdown Lists */
+.final-answer ul,
+.output ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+  color: #cbd5e1;
+}
+
+.final-answer li,
+.output li {
+  margin: 0.5rem 0;
+}
+
+/* Markdown Bold */
+.final-answer strong,
+.output strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Markdown Paragraphs */
+.final-answer p,
+.output p {
+  margin: 1rem 0;
+  color: #cbd5e1;
+  line-height: 1.6;
+}
 @media (max-width: 800px) {
   .app-shell { grid-template-columns: 1fr; }
   .sidebar { display: none; }

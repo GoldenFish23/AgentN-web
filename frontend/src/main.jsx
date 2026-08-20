@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { createRoot } from "react-dom/client";
 import "./style.css";
 
@@ -167,9 +169,9 @@ function App() {
 
             <div className="examples">
               {[
-                "What's the best place in Delhi to visit?",
-                "Should I learn Python or JavaScript first?",
-                "Design a small SaaS architecture."
+                "What's the best place in Delhi to visit under 350 Rs?",
+                "Tell me what's current booming technology, which is free to learn and sell.",
+                "Create a plan for 5 day trip in Kanpur. Share some historical places I can visit."
               ].map(example => (
                 <button key={example} onClick={() => setQuery(example)}>
                   {example}
@@ -223,7 +225,11 @@ function App() {
                       <small>{roles[expert.role]}</small>
                     </div>
                   </div>
-                  <div className="output">{expert.output}</div>
+                  <div className="output">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {expert.output}
+                    </ReactMarkdown>
+                  </div>
                 </article>
               ))}
             </div>
@@ -233,7 +239,11 @@ function App() {
                 <label>MEDIATOR</label>
                 <span>CONSENSUS</span>
               </div>
-              <div className="final-answer">{selected.finalSynthesis}</div>
+              <div className="final-answer">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {selected.finalSynthesis}
+                </ReactMarkdown>
+              </div>
             </div>
           </section>
         )}
