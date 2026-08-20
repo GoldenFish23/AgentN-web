@@ -13,7 +13,7 @@ FRONTEND_DIST = BASE_DIR / "frontend" / "dist"
 ROLES_FILE = BASE_DIR / "backend" / "roles.json"
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-MODEL = os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3-super:free")
+MODEL = os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3-super-120b-a12b:free")
 MAX_EXPERTS = max(1, min(int(os.getenv("MAX_EXPERTS", "4")), 6))
 
 app = Flask(__name__, static_folder=str(FRONTEND_DIST), static_url_path="")
