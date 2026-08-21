@@ -18,7 +18,11 @@ MODEL = os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3-super-120b-a12b:free")
 MAX_EXPERTS = max(1, min(int(os.getenv("MAX_EXPERTS", "4")), 6))
 # OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=[
+    "https://agentn-frontend.onrender.com", 
+    "http://localhost:5173",
+    "https://*.app.github.dev"
+])
 
 with open(ROLES_FILE, "r", encoding="utf-8") as f:
     ROLES = json.load(f)
