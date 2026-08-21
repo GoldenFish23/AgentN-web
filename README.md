@@ -1,12 +1,3 @@
----
-title: AgentN Web
-emoji: 🐟
-colorFrom: blue
-colorTo: indigo
-sdk: docker
-app_port: 7860
----
-
 # Agent N
 
 **Stop looking at problems from a single vantage point. Agent N leverages multi-perspective synthesis to deliver more sustainable, high-fidelity solutions.**
