@@ -19,7 +19,11 @@ MAX_EXPERTS = max(1, min(int(os.getenv("MAX_EXPERTS", "4")), 6))
 # OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 app = Flask(__name__)
 CORS(app, origins=[
+<<<<<<< HEAD
     "https://agentn-frontend.onrender.com", 
+=======
+    "https://agentn-frontend.onrender.com",
+>>>>>>> 3824bbb (Update AI)
     "http://localhost:5173",
     "https://*.app.github.dev"
 ])
@@ -27,10 +31,9 @@ CORS(app, origins=[
 with open(ROLES_FILE, "r", encoding="utf-8") as f:
     ROLES = json.load(f)
 
-
 def openrouter(messages, temperature=0.5, max_tokens=900):
     """Server-side OpenRouter call. The API key never reaches React."""
-    api_key = os.getenv("OPENROUTER_API_KEY","")
+    api_key = os.getenv("OPENROUTER_API_KEY", "")
     if not api_key:
         raise RuntimeError("OPENROUTER_API_KEY is not configured.")
 
@@ -74,7 +77,6 @@ def openrouter(messages, temperature=0.5, max_tokens=900):
 
     return content
 
-
 def extract_json(text):
     """Extract JSON even if the model accidentally surrounds it with prose."""
     start = text.find("{")
@@ -83,7 +85,6 @@ def extract_json(text):
         raise ValueError("No JSON object found.")
     return json.loads(text[start:end + 1])
 
-
 def route_question(user_input):
     expert_registry = "\n".join(
         f"- {role_id}: {role['goal']}"
@@ -91,8 +92,7 @@ def route_question(user_input):
         if role_id != "mediator"
     )
 
-    prompt = f"""
-You are AgentN's router.
+    prompt = f"""You are AgentN's router.
 
 USER QUESTION:
 {user_input}
@@ -106,13 +106,12 @@ Use 1 role for a simple question, 2-3 for ordinary questions,
 and at most {MAX_EXPERTS} for complex questions.
 
 Return ONLY JSON:
-{{
+{
   "selected": ["role_id"],
   "logic": "short explanation"
-}}
+}
 
-Never invent role IDs.
-"""
+Never invent role IDs."""
 
     raw = openrouter(
         [
@@ -144,14 +143,13 @@ Never invent role IDs.
         "Roles were selected according to question complexity and relevance.",
     )
 
-
 def run_expert(role_id, user_input, previous_decision=None):
     role = ROLES[role_id]
 
     context = (
         "There is no previous session context."
         if not previous_decision
-        else f"Previous session context:\n{previous_decision[:5000]}"
+        else f"Previous session context:\n{previous_decision[:3000]}"
     )
 
     # --- YOUR EXCELLENT ADAPTIVE TONE PROMPT ---
@@ -162,7 +160,7 @@ def run_expert(role_id, user_input, previous_decision=None):
         "--- ADAPTIVE TONE INSTRUCTIONS ---\n"
         "1. IF the request is technical or complex: Be concise, specialized, and highly technical.\n"
         "2. IF the request is casual, personal, or a joke: Respond naturally as your persona. Do NOT provide technical roadmaps or phase plans for simple conversation.\n"
-        "3. Avoid 'Corporate Speak' unless the user asks for a business plan."
+        "3. Avoid 'Corporate Speak' unless the user asks for a business plan.\n"
         "4. STYLE: The complete output must be only in proper Markdown format."
     )
 
@@ -171,24 +169,27 @@ def run_expert(role_id, user_input, previous_decision=None):
         {"role": "user", "content": f"{context}\n\nCURRENT QUESTION:\n{user_input}"},
     ]
 
-    return role_id, openrouter(messages, temperature=0.65, max_tokens=500)
-
+    return role_id, openrouter(messages, temperature=0.65, max_tokens=1000)  # increased from 500 to 1000
 
 def mediate(user_input, experts, previous_decision=None):
-    findings = "\n\n".join(
-        f"--- {role.upper()} ---\n{output}"
-        for role, output in experts
-    )
-
+    # Truncate previous_decision to 3000 characters if present
     previous = (
         "None"
         if not previous_decision
-        else previous_decision[:5000]
+        else previous_decision[:3000]
     )
 
+    # Build findings and truncate to 3000 characters if needed
+    findings_raw = "\n\n".join(
+        f"--- {role.upper()} ---\n{output}"
+        for role, output in experts
+    )
+    if len(findings_raw) > 3000:
+        findings_raw = findings_raw[:3000] + "\n... [truncated]\n"
+    findings = findings_raw
+
     # --- YOUR INTENT-SCALING PROMPT + BEAUTIFUL MARKDOWN STRUCTURE ---
-    prompt = f"""
-You are AgentN's final MEDIATOR.
+    prompt = f"""You are AgentN's final MEDIATOR.
 
 --- PREVIOUS CONTEXT ---
 {previous}
@@ -198,7 +199,7 @@ You are AgentN's final MEDIATOR.
 
 --- MANDATORY MEDIATOR PROTOCOL ---
 1. IDENTIFY INTENT: Understand the context and depth of the USER REQUEST.
-2. DEPTH SCALING: 
+2. DEPTH SCALING:
    - IF the prompt has depth (technical, statistical, planning, complex): Reply FORMALLY. Provide a high-density response. Use Markdown tables for comparisons. Every key point must end with a [Role] citation (e.g., [Planner]). DO NOT include your own 'Identity' or 'Description'. Start the response directly.
    - IF the prompt is shallow (casual, personal, simple chat): Reply INFORMALLY. Be a friendly partner. Emojis are encouraged. Answers should be short, warm, and unstructured. NO roadmaps or phase plans for simple chat.
 3. FORMATTING (For Formal Replies Only): Structure your response exactly like this:
@@ -219,14 +220,12 @@ USER REQUEST: {user_input}
             {"role": "user", "content": prompt},
         ],
         temperature=0.55,
-        max_tokens=1400,
+        max_tokens=2000,  # increased from 1400 to 2000
     )
-
 
 @app.get("/api/health")
 def health():
     return jsonify({"ok": True, "model": MODEL})
-
 
 @app.get("/api/roles")
 def get_roles():
@@ -236,7 +235,6 @@ def get_roles():
             for role_id, role in ROLES.items()
         ]
     })
-
 
 @app.post("/api/agent")
 def agent():
@@ -304,27 +302,6 @@ def agent():
 
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500
-
-
-# @app.route("/", defaults={"path": ""})
-# @app.route("/<path:path>")
-# def serve_frontend(path):
-#     # API paths are handled above. Everything else goes to the React SPA.
-#     if path.startswith("api/"):
-#         return jsonify({"error": "Not found"}), 404
-
-#     target = FRONTEND_DIST / path
-#     if path and target.exists() and target.is_file():
-#         return send_from_directory(FRONTEND_DIST, path)
-
-#     index = FRONTEND_DIST / "index.html"
-#     if index.exists():
-#         return send_from_directory(FRONTEND_DIST, "index.html")
-
-#     return jsonify({
-#         "error": "React build not found. Run npm run build first."
-#     }), 500
-
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "5000"))
