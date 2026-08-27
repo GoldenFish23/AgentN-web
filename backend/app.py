@@ -19,11 +19,7 @@ MAX_EXPERTS = max(1, min(int(os.getenv("MAX_EXPERTS", "4")), 6))
 # OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 app = Flask(__name__)
 CORS(app, origins=[
-<<<<<<< HEAD
     "https://agentn-frontend.onrender.com", 
-=======
-    "https://agentn-frontend.onrender.com",
->>>>>>> 3824bbb (Update AI)
     "http://localhost:5173",
     "https://*.app.github.dev"
 ])
