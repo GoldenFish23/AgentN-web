@@ -12,5 +12,21 @@ services:
         value: nvidia/nemotron-3-super-120b-a12b:free
       - key: MAX_EXPERTS
         value: "4"
-      - key: OPENROUTER_APP_NAME
-        value: AgentN
+      - key: CONTEXT_MAX_CHARS
+        value: "12000"
+      - key: EXPERT_TOKENS_SIMPLE
+        value: "800"
+      - key: EXPERT_TOKENS_NORMAL
+        value: "1400"
+      - key: EXPERT_TOKENS_COMPLEX
+        value: "2200"
+      - key: EXPERT_TOKENS_VERY_COMPLEX
+        value: "3000"
+      - key: MEDIATOR_TOKENS_SIMPLE
+        value: "1400"
+      - key: MEDIATOR_TOKENS_NORMAL
+        value: "2200"
+      - key: MEDIATOR_TOKENS_COMPLEX
+        value: "3500"
+      - key: MEDIATOR_TOKENS_VERY_COMPLEX
+        value: "5000"
