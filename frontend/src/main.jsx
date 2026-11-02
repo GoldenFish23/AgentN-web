@@ -48,16 +48,49 @@ function App() {
   const [busy, setBusy] = useState(false);
   const [stage, setStage] = useState("Ready");
   const [error, setError] = useState("");
+  const [booting, setBooting] = useState(true);
+  const [bootError, setBootError] = useState("");
+
+  async function warmBackend() {
+    try {
+      const response = await fetch(`${API_BASE}/api/start`, { method: "GET" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || "Backend startup failed.");
+      }
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  }
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/roles`)
-      .then((r) => r.json())
-      .then((data) => {
+    let isMounted = true;
+
+    async function bootstrap() {
+      try {
+        await warmBackend();
+        const rolesResponse = await fetch(`${API_BASE}/api/roles`);
+        const data = await rolesResponse.json().catch(() => ({ roles: [] }));
+
+        if (!isMounted) return;
+
         const map = {};
         for (const role of data.roles || []) map[role.id] = role.description;
         setRoles(map);
-      })
-      .catch(() => {});
+        setBootError("");
+        setBooting(false);
+      } catch (err) {
+        if (!isMounted) return;
+        setBootError(err.message || "Unable to reach the backend.");
+        setBooting(false);
+      }
+    }
+
+    bootstrap();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   function save(next) {
@@ -112,6 +145,52 @@ function App() {
 
   const sessionCount = sessions.length;
   const truncationWarning = selected?.finalTruncated || selected?.experts?.some((x) => x.truncated);
+
+  if (booting) {
+    return (
+      <div className="boot-screen">
+        <div className="boot-card">
+          <div className="boot-logo">✦</div>
+          <div className="boot-kicker">STARTING AGENTN</div>
+          <h1>Waking the backend and preparing the boardroom…</h1>
+          <div className="boot-spinner" aria-label="Loading" />
+          <p>Loading the latest model context and routing layer.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (bootError) {
+    return (
+      <div className="boot-screen">
+        <div className="boot-card error-card">
+          <div className="boot-logo">!</div>
+          <div className="boot-kicker">BACKEND UNAVAILABLE</div>
+          <h1>AgentN could not start.</h1>
+          <p>{bootError}</p>
+          <button className="retry-button" onClick={() => {
+            setBooting(true);
+            setBootError("");
+            warmBackend()
+              .then(async () => {
+                const rolesResponse = await fetch(`${API_BASE}/api/roles`);
+                const data = await rolesResponse.json().catch(() => ({ roles: [] }));
+                const map = {};
+                for (const role of data.roles || []) map[role.id] = role.description;
+                setRoles(map);
+                setBooting(false);
+              })
+              .catch((err) => {
+                setBootError(err.message || "Unable to reach the backend.");
+                setBooting(false);
+              });
+          }}>
+            Retry startup
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell">

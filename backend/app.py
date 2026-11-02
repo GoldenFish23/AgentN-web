@@ -32,6 +32,7 @@ MEDIATOR_BUDGETS = {
 
 app = Flask(__name__)
 CORS(app, origins="*")
+STARTED_AT = datetime.now(timezone.utc).isoformat()
 
 with open(ROLES_FILE, "r", encoding="utf-8") as f:
     ROLES = json.load(f)
@@ -265,11 +266,23 @@ USER REQUEST:
     )
 
 
+@app.get("/api/start")
+def start_backend():
+    return jsonify({
+        "ok": True,
+        "status": "ready",
+        "model": MODEL,
+        "startedAt": STARTED_AT,
+    })
+
+
 @app.get("/api/health")
 def health():
     return jsonify({
         "ok": True,
+        "status": "ready",
         "model": MODEL,
+        "startedAt": STARTED_AT,
         "adaptiveBudgets": {
             "expert": EXPERT_BUDGETS,
             "mediator": MEDIATOR_BUDGETS,
